@@ -296,7 +296,7 @@ template <typename T> void readFile(const char* ifilename, edge<T>*& edges, int&
 		assert(m==n);
 
 		if (opt.nvertices != 0) {
-			//assert(opt.nvertices == n);
+			assert(opt.nvertices == n);
 			printf("Warning: File had %d vertices, overriding with %d vertices\n", n, opt.nvertices);
 			n = opt.nvertices;
 		}

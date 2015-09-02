@@ -38,7 +38,7 @@ class PR {
     int degree;
   public:
     PR() {
-      pagerank = 0.3;
+      pagerank = 0.15;
       degree = 0;
     }
     int operator!=(const PR& p) {
@@ -52,7 +52,7 @@ class PageRank : public GraphProgram<double, double, PR> {
 
   public:
 
-  PageRank(double a=0.3) {
+  PageRank(double a=0.15) {
     alpha = a;
     this->activity = ALL_VERTICES;
   }
@@ -117,6 +117,13 @@ void run_pagerank(const char* filename, int nthreads) {
   for (int i = 0; i < std::min((unsigned long long int)25, (unsigned long long int)G.getNumberOfVertices()); i++) { 
     printf("%d : %d %f\n", i, G.getVertexproperty(i).degree, G.getVertexproperty(i).pagerank);
   }
+
+  double pr_sum = 0;
+  for (int i = 0; i < (unsigned long long int)G.getNumberOfVertices(); i++) { 
+    pr_sum += G.getVertexproperty(i).pagerank;
+  }
+  printf("sum of ranks: %f\n", pr_sum );
+
 }
 
 int main(int argc, char* argv[]) {

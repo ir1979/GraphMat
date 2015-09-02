@@ -63,7 +63,6 @@ class Graph {
 
   public:
     V* vertexproperty;
-    :1
 MatrixDC<E>** mat;
     MatrixDC<E>** matT; //transpose
     int nparts;
