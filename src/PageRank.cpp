@@ -32,13 +32,15 @@
 
 #include "Degree.cpp"
 
+int maxIter = 10;
+
 class PR {
   public:
     double pagerank;
     int degree;
   public:
     PR() {
-      pagerank = 0.15;
+      pagerank = 1.0;
       degree = 0;
     }
     int operator!=(const PR& p) {
@@ -107,7 +109,7 @@ void run_pagerank(const char* filename, int nthreads) {
 
   G.setAllActive();
   //run_graph_program(&pr, G, -1, &pr_tmp);
-  run_graph_program(&pr, G, 110, &pr_tmp);  
+  run_graph_program(&pr, G, maxIter, &pr_tmp);  
 
   gettimeofday(&end, 0);
   time = (end.tv_sec-start.tv_sec)*1e3+(end.tv_usec-start.tv_usec)*1e-3;
@@ -123,7 +125,9 @@ void run_pagerank(const char* filename, int nthreads) {
   for (int i = 0; i < (unsigned long long int)G.getNumberOfVertices(); i++) { 
     pr_sum += G.getVertexproperty(i).pagerank;
   }
-  printf("sum of ranks: %f\n", pr_sum );
+  //printf("sum of ranks: %f\n", pr_sum );
+  std::cout << "sum of ranks: " << pr_sum << std::endl;
+  printf("sum = %.6lf\n", pr_sum);
 
 }
 
@@ -134,6 +138,10 @@ int main(int argc, char* argv[]) {
   if (argc < 2) {
     printf("Correct format: %s A.mtx\n", argv[0]);
     return 0;
+  }
+
+  if (argc == 3){
+    maxIter = atoi(argv[2]);
   }
 
 #pragma omp parallel
