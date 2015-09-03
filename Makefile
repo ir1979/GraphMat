@@ -3,9 +3,10 @@ CXX_OPTIONS=-openmp -std=c++11 -I./src/
 
 
 ifeq (${debug}, 1)
-  CXX_OPTIONS += -g
+  CXX_OPTIONS += -g	
 else
   CXX_OPTIONS += -O3 -ipo 
+  CXX_OPTIONS += -g	
 endif
 
 CXX_OPTIONS += -xHost

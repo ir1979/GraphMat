@@ -42,7 +42,7 @@ class PR {
       degree = 0;
     }
     int operator!=(const PR& p) {
-      return (fabs(p.pagerank-pagerank)>1e-8);
+      return (fabs(p.pagerank-pagerank)>1e-6);
     }
 };
 
@@ -106,8 +106,9 @@ void run_pagerank(const char* filename, int nthreads) {
   gettimeofday(&start, 0);
 
   G.setAllActive();
-  run_graph_program(&pr, G, -1, &pr_tmp);
-  
+  //run_graph_program(&pr, G, -1, &pr_tmp);
+  run_graph_program(&pr, G, 110, &pr_tmp);  
+
   gettimeofday(&end, 0);
   time = (end.tv_sec-start.tv_sec)*1e3+(end.tv_usec-start.tv_usec)*1e-3;
   printf("PR Time = %.3f ms \n", time);
