@@ -40,7 +40,7 @@ class PR {
     int degree;
   public:
     PR() {
-      pagerank = 1.0;
+      pagerank = 0.15;
       degree = 0;
     }
     int operator!=(const PR& p) {

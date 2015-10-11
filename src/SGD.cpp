@@ -31,6 +31,8 @@
 #include <omp.h>
 #include "GraphMatRuntime.cpp"
 
+#define COMPUTE_RMSE 1
+
 const int MAX_THREADS = 120;
 unsigned int rseed[16*MAX_THREADS];
 
@@ -193,7 +195,12 @@ class SGDInitProgram : public GraphProgram<bool, bool, LatentVector<K> > {
 
   void apply(const bool& message_out, LatentVector<K>& vertexprop) {
     for (int i = 0; i < K; i++) {
+#ifndef COMPUTE_RMSE
       vertexprop.lv[i] = ((double)rand_r(rseed + 16*omp_get_thread_num() )/(double)RAND_MAX);
+#else
+      vertexprop.lv[i] = 0.5;
+#endif
+
     }
   }
 
@@ -224,7 +231,18 @@ void run_sgd(char* filename, int nthreads) {
   run_graph_program(&rmsep, G, 1, &rmsep_tmp);
 
   for (int i = 0; i < G.nvertices; i++) err += G.getVertexproperty(i).sqerr;
+  printf("SE error = %lf total \n", err);
   printf("RMSE error = %lf per edge \n", sqrt(err/(G.nnz)));
+
+  #ifdef DEBUG
+  for (int i = 0; i < G.nvertices; i++){
+    std::cout << "node: " << i << std::endl;
+    for (int j = 0; j < 20; j++){
+      std::cout << G.getVertexproperty(i).lv[j] << std::endl;
+    }
+    std::cout << std::endl;
+  }
+  #endif
 
   printf("SGD Init over\n");
   
@@ -233,7 +251,7 @@ void run_sgd(char* filename, int nthreads) {
   gettimeofday(&start, 0);
 
   G.setAllActive();
-  run_graph_program(&sgdp, G, 10, &sgdp_tmp);
+  run_graph_program(&sgdp, G, 4, &sgdp_tmp);
 
   /*
   for (int it = 0; it < 10; it ++) {
@@ -263,6 +281,7 @@ void run_sgd(char* filename, int nthreads) {
 
   err = 0.0;
   for (int i = 0; i < G.nvertices; i++) err += G.getVertexproperty(i).sqerr;
+  printf("SE error = %lf total \n", err);
   printf("RMSE error = %lf per edge \n", sqrt(err/(G.nnz)));
 
   for (int i = 0; i <= std::min(10, G.nvertices); i++) { 
