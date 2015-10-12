@@ -32,6 +32,7 @@
 #include "GraphMatRuntime.cpp"
 
 #define COMPUTE_RMSE 1
+//#define DEBUG 1
 
 const int MAX_THREADS = 120;
 unsigned int rseed[16*MAX_THREADS];
@@ -44,12 +45,13 @@ class LatentVector {
 
   public:
     LatentVector() {
-      //for (int i = 0; i < K; i++) {
+      for (int i = 0; i < K; i++) {
         //lv[i] = 2*((double)rand()/(double)RAND_MAX)-1;
         //lv[i] = ((double)rand()/(double)RAND_MAX);
         //lv[i] = 1.0;//((double)rand()/(double)RAND_MAX);
         //lv[i] = ((double)rand_r(rseed + 16*omp_get_thread_num() )/(double)RAND_MAX);
-      //}
+	lv[i] = 0.5;
+      }
     }
     ~LatentVector() {
     }
@@ -124,11 +126,16 @@ class SGDProgram : public GraphProgram<LatentVector<K>, LatentVector<K>, LatentV
       estimate += message.lv[i]*vertexprop.lv[i];
     }
     double error = edge_val - estimate;
+    #ifdef DEBUG
+    std::cout << "rating: " << edge_val << std::endl;
+    std::cout << "estimate: " << estimate << std::endl;
+    #endif
 
     for (int i =0; i < K; i++) {
       //res.lv[i] = -lambda*vertexprop.lv[i] + message.lv[i]*error;
       res.lv[i] =  message.lv[i]*error;
     }
+
   }
 
   //bool send_message(const LatentVector<K>& vertexprop, ConstLatentVectorPtr<K>& message) {
@@ -217,18 +224,42 @@ void run_sgd(char* filename, int nthreads) {
   }
   double err = 0.0;
 
+#ifndef DEBUG
   SGDProgram<k> sgdp(0.001, 0.00000035);
-  SGDInitProgram<k> sgdip;
+#else
+  SGDProgram<k> sgdp(0.001, 0.0035);
+#endif
+
+  //SGDInitProgram<k> sgdip;
   RMSEProgram<k> rmsep;
 
   auto sgdp_tmp = graph_program_init(sgdp, G);
+
+  // for (int i = 0; i < G.nvertices; i++){
+  //   double *lv = new double[k];
+  //   for (int j = 0; j < k; j++){
+  //     lv[j] = 0.5;
+  //   }
+  //   G.setVertexproperty(i, lv);
+  // }
   auto rmsep_tmp = graph_program_init(rmsep, G);
 
-  G.setAllActive();
-  run_graph_program(&sgdip, G);
+  //G.setAllActive();
+  //run_graph_program(&sgdip, G);
   
   G.setAllActive();
   run_graph_program(&rmsep, G, 1, &rmsep_tmp);
+
+  double latent_sum = 0.0;
+  for (int i = 0; i < G.nvertices; i++){
+    for (int j = 0; j < 20; j++){
+      latent_sum = latent_sum +  G.getVertexproperty(i).lv[j];
+      if (G.getVertexproperty(i).lv[j] != 0.5){
+	std::cout << "error: " << G.getVertexproperty(i).lv[j] << std::endl;
+      }
+    }
+  }
+  std::cout << "latent sum: " << latent_sum << std::endl;
 
   for (int i = 0; i < G.nvertices; i++) err += G.getVertexproperty(i).sqerr;
   printf("SE error = %lf total \n", err);
@@ -251,7 +282,26 @@ void run_sgd(char* filename, int nthreads) {
   gettimeofday(&start, 0);
 
   G.setAllActive();
-  run_graph_program(&sgdp, G, 4, &sgdp_tmp);
+  run_graph_program(&sgdp, G, 3, &sgdp_tmp);
+
+  #ifdef DEBUG
+  for (int i = 0; i < G.nvertices; i++){
+    std::cout << "node: " << i << std::endl;
+    for (int j = 0; j < 20; j++){
+      std::cout << G.getVertexproperty(i).lv[j] << std::endl;
+    }
+    std::cout << std::endl;
+  }
+#endif
+  
+  std::cout << "number of vertices: " << G.nvertices << std::endl;
+  latent_sum = 0.0;
+  for (int i = 0; i < G.nvertices; i++){
+    for (int j = 0; j < 20; j++){
+      latent_sum += G.getVertexproperty(i).lv[j];
+    }
+  }
+  std::cout << "latent sum: " << latent_sum << std::endl;
 
   /*
   for (int it = 0; it < 10; it ++) {
