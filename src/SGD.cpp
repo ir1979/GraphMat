@@ -30,7 +30,6 @@
  * ******************************************************************************/
 #include <omp.h>
 #include "GraphMatRuntime.cpp"
-
 #define COMPUTE_RMSE 1
 //#define DEBUG 1
 
@@ -109,6 +108,7 @@ class SGDProgram : public GraphProgram<LatentVector<K>, LatentVector<K>, LatentV
       lambda = l;
       step = s;
       this->order = ALL_EDGES;// check
+      //this->order = IN_EDGES;
       this->activity = ALL_VERTICES;
     }
 
@@ -224,11 +224,14 @@ void run_sgd(char* filename, int nthreads) {
   }
   double err = 0.0;
 
-#ifndef DEBUG
+
+// #ifndef DEBUG
+//   SGDProgram<k> sgdp(0.001, 0.00000035);
+// #else
+//   SGDProgram<k> sgdp(0.001, 0.0035);
+// #endif
+    
   SGDProgram<k> sgdp(0.001, 0.00000035);
-#else
-  SGDProgram<k> sgdp(0.001, 0.0035);
-#endif
 
   //SGDInitProgram<k> sgdip;
   RMSEProgram<k> rmsep;
@@ -252,7 +255,7 @@ void run_sgd(char* filename, int nthreads) {
 
   double latent_sum = 0.0;
   for (int i = 0; i < G.nvertices; i++){
-    for (int j = 0; j < 20; j++){
+    for (int j = 0; j < k; j++){
       latent_sum = latent_sum +  G.getVertexproperty(i).lv[j];
       if (G.getVertexproperty(i).lv[j] != 0.5){
 	std::cout << "error: " << G.getVertexproperty(i).lv[j] << std::endl;
@@ -264,11 +267,12 @@ void run_sgd(char* filename, int nthreads) {
   for (int i = 0; i < G.nvertices; i++) err += G.getVertexproperty(i).sqerr;
   printf("SE error = %lf total \n", err);
   printf("RMSE error = %lf per edge \n", sqrt(err/(G.nnz)));
+  printf("number of latent factors %d \n", k);
 
   #ifdef DEBUG
   for (int i = 0; i < G.nvertices; i++){
     std::cout << "node: " << i << std::endl;
-    for (int j = 0; j < 20; j++){
+    for (int j = 0; j < k; j++){
       std::cout << G.getVertexproperty(i).lv[j] << std::endl;
     }
     std::cout << std::endl;
@@ -276,18 +280,26 @@ void run_sgd(char* filename, int nthreads) {
   #endif
 
   printf("SGD Init over\n");
-  
+  #ifdef PROFILE
+  printf("continue? \n");
+  int i = getchar();
+  #endif
+
+ 
   struct timeval start, end;
 
-  gettimeofday(&start, 0);
+
 
   G.setAllActive();
-  run_graph_program(&sgdp, G, 3, &sgdp_tmp);
+ 
+  gettimeofday(&start, 0);
+  run_graph_program(&sgdp, G, 5, &sgdp_tmp);
+  gettimeofday(&end, 0);
 
   #ifdef DEBUG
   for (int i = 0; i < G.nvertices; i++){
     std::cout << "node: " << i << std::endl;
-    for (int j = 0; j < 20; j++){
+    for (int j = 0; j < k; j++){
       std::cout << G.getVertexproperty(i).lv[j] << std::endl;
     }
     std::cout << std::endl;
@@ -297,7 +309,7 @@ void run_sgd(char* filename, int nthreads) {
   std::cout << "number of vertices: " << G.nvertices << std::endl;
   latent_sum = 0.0;
   for (int i = 0; i < G.nvertices; i++){
-    for (int j = 0; j < 20; j++){
+    for (int j = 0; j < k; j++){
       latent_sum += G.getVertexproperty(i).lv[j];
     }
   }
@@ -318,10 +330,15 @@ void run_sgd(char* filename, int nthreads) {
   }
   */
 
-  gettimeofday(&end, 0);
+ 
+
   
   double time = (end.tv_sec-start.tv_sec)*1e3+(end.tv_usec-start.tv_usec)*1e-3;
   printf("Time = %.3f ms \n", time);
+
+#ifdef PROFILE
+  return;
+#endif
 
   G.setAllActive();
   run_graph_program(&rmsep, G, 1, &rmsep_tmp);
@@ -334,11 +351,11 @@ void run_sgd(char* filename, int nthreads) {
   printf("SE error = %lf total \n", err);
   printf("RMSE error = %lf per edge \n", sqrt(err/(G.nnz)));
 
-  for (int i = 0; i <= std::min(10, G.nvertices); i++) { 
-    printf("%d : ", i) ;
-    G.getVertexproperty(i).print();
-    printf("\n");
-  }
+  // for (int i = 0; i <= std::min(10, G.nvertices); i++) { 
+  //   printf("%d : ", i) ;
+  //   G.getVertexproperty(i).print();
+  //   printf("\n");
+  // }
 }
 
 int main(int argc, char* argv[]) {

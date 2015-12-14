@@ -1,11 +1,15 @@
 CXX=icpc
 CXX_OPTIONS=-openmp -std=c++11 -I./src/ 
 
+ifeq (${PROFILE},1)
+        CXX_OPTIONS+=-DPROFILE
+endif
+
 
 ifeq (${debug}, 1)
   CXX_OPTIONS += -g	
 else
-  CXX_OPTIONS += -O3 -ipo 
+  CXX_OPTIONS += -O3 -ipo -vec-report
   CXX_OPTIONS += -g	
 endif
 

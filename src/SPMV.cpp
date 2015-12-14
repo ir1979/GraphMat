@@ -36,6 +36,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#define SLOW
+
 extern int nthreads;
 
 template <class T, class U, class V, class E>
@@ -46,6 +48,8 @@ void BlockingHypersparse_GEMV(const MatrixDC<E>* A_DCSC, const V* Vertexproperty
     i = 0;
     U res[4];
 
+
+#ifndef SLOW
     while (i < A_DCSC->nzx) {
       if (get_bitvector(A_DCSC->xindex[i], x.bitvector)) {
         int end = (i == A_DCSC->nzx - 1 ? A_DCSC->nnz : A_DCSC->starty[i + 1]);
@@ -69,6 +73,24 @@ void BlockingHypersparse_GEMV(const MatrixDC<E>* A_DCSC, const V* Vertexproperty
       }
       i++;
     }
+#else
+    //printf("slow no manual unroll\n");
+    while (i < A_DCSC->nzx) {
+      if (get_bitvector(A_DCSC->xindex[i], x.bitvector)) {
+        int end = (i == A_DCSC->nzx - 1 ? A_DCSC->nnz : A_DCSC->starty[i + 1]);
+        T  p = x.getValue(A_DCSC->xindex[i]);
+	int j = A_DCSC->starty[i];
+	//comment out the prefetching
+        //_mm_prefetch((char*)(x.value + A_DCSC->xindex[i+4]), _MM_HINT_T0);     
+        for (; j < end; j++) {
+          gp->process_message(p, A_DCSC->value[j], Vertexproperty[A_DCSC->yindex[j]], res[0]);
+          result.reduce(A_DCSC->yindex[j], res[0], gp); 
+        }
+      }
+      i++;
+    }
+#endif
+
 }
 
 
