@@ -2,7 +2,7 @@ CXX=icpc
 CXX_OPTIONS=-openmp -std=c++11 -I./src/ 
 
 ifeq (${PROFILE},1)
-        CXX_OPTIONS+=-DPROFILE
+        CXX_OPTIONS +=-DPROFILE
 endif
 
 

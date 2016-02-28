@@ -31,8 +31,10 @@
 #include "GraphMatRuntime.cpp"
 
 #include "Degree.cpp"
+#include <fstream>
 
-int maxIter = 10;
+
+int maxIter = 20;
 
 class PR {
   public:
@@ -90,6 +92,14 @@ void run_pagerank(const char* filename, int nthreads) {
   G.ReadMTX(filename, nthreads*4); //nthread pieces of matrix
 
   auto dg_tmp = graph_program_init(dg, G);
+
+  #ifdef PROFILE
+  std::ofstream outputFile;
+  outputFile.open("./.ready");
+  outputFile.close();
+  printf("continue? \n");
+  int i = getchar();
+  #endif
 
   struct timeval start, end;
   gettimeofday(&start, 0);

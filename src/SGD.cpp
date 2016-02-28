@@ -30,6 +30,8 @@
  * ******************************************************************************/
 #include <omp.h>
 #include "GraphMatRuntime.cpp"
+#include <fstream>
+
 #define COMPUTE_RMSE 1
 //#define DEBUG 1
 
@@ -107,8 +109,8 @@ class SGDProgram : public GraphProgram<LatentVector<K>, LatentVector<K>, LatentV
     SGDProgram(double l, double s) {
       lambda = l;
       step = s;
-      this->order = ALL_EDGES;// check
-      //this->order = IN_EDGES;
+      //this->order = ALL_EDGES;// check
+      this->order = IN_EDGES;
       this->activity = ALL_VERTICES;
     }
 
@@ -281,6 +283,9 @@ void run_sgd(char* filename, int nthreads) {
 
   printf("SGD Init over\n");
   #ifdef PROFILE
+  std::ofstream outputFile;
+  outputFile.open("./.ready");
+  outputFile.close();
   printf("continue? \n");
   int i = getchar();
   #endif
@@ -293,7 +298,8 @@ void run_sgd(char* filename, int nthreads) {
   G.setAllActive();
  
   gettimeofday(&start, 0);
-  run_graph_program(&sgdp, G, 5, &sgdp_tmp);
+  int maxIter = 5;
+  run_graph_program(&sgdp, G, maxIter, &sgdp_tmp);
   gettimeofday(&end, 0);
 
   #ifdef DEBUG
